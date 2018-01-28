@@ -35,7 +35,7 @@ namespace JanuszJusiak.Controllers
             {
                 var result = await _signInManager.PasswordSignInAsync(user, loginViewModel.Password, false, false);
 
-                if (result.Succeeded) return RedirectToAction("Admin", "Index");
+                if (result.Succeeded) return RedirectToAction("Index", "Admin");
             }
 
             ModelState.AddModelError("", "User name/password not found");
@@ -44,6 +44,11 @@ namespace JanuszJusiak.Controllers
 
         public IActionResult Register()
         {
+            if (_signInManager.IsSignedIn(User))
+            {
+                _signInManager.SignOutAsync();
+                return RedirectToAction("Index", "Home");
+            }
             return View();
         }
 
@@ -55,9 +60,19 @@ namespace JanuszJusiak.Controllers
                 var user = new IdentityUser() { UserName = loginViewModel.UserName };
                 var result = await _userManager.CreateAsync(user, loginViewModel.Password);
 
-                if (result.Succeeded) return RedirectToAction("Account", "Login");
+                if (result.Succeeded)
+                {
+                    return RedirectToAction("Login", "Account");
+                }
+                else
+                {
+                    foreach (var error in result.Errors)
+                    {
+                        ModelState.AddModelError(string.Empty, error.Description);
+                    }
+                }
             }
-
+            
             return View(loginViewModel);
         }
 
